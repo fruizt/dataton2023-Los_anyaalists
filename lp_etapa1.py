@@ -230,7 +230,7 @@ for i in range(T):
 # prob += l[29] == 1
 
 # Solve the problem
-prob.solve()
+prob.solve(pulp.PULP_CBC_CMD(timeLimit=60))  # Set a time limit of 60 seconds
 
 # Check the solver status
 if pulp.LpStatus[prob.status] == "Optimal":
