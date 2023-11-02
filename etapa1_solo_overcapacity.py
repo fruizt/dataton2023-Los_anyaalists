@@ -88,6 +88,14 @@ x = pulp.LpVariable.dicts(
     "Block", range(T), 0, 3, cat=pulp.LpInteger
 )  # Value from 0 to 3
 
+o = pulp.LpVariable.dicts(
+    "Overcapacity", range(T), lowBound=0, cat=pulp.LpInteger
+) 
+
+y = pulp.LpVariable.dicts(
+    "decision", range(T), cat=pulp.LpBinary
+)
+
 # Channels
 n = pulp.LpVariable.dicts(
     "Nothing", range(T), cat=pulp.LpBinary
@@ -114,7 +122,13 @@ end_almuerzo = pulp.LpVariable.dicts(
 )  # 1 for end of lunch, 0 otherwise
 
 # Objective function: Maximize work blocks.
-prob += pulp.lpSum((d[i] - w[i]) for i in range(T))
+prob += pulp.lpSum(o[i] for i in range(T))
+# prob += pulp.lpSum(o[i] for i in range(T))
+
+# M = 1000
+for i in range(T):
+    prob += o[i] >= d[i] - w[i]
+#     prob += o[i] <= M * (1 - w[i])
 
 # Constraints
 
@@ -238,6 +252,8 @@ if pulp.LpStatus[prob.status] == "Optimal":
     print_schedule_bin(a)
     print_schedule_bin(end_active)
    
+
+    # print(d)
     print("Objective =", pulp.value(prob.objective))
 else:
     print("Could not find an optimal solution.")

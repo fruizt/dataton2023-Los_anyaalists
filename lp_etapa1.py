@@ -1,5 +1,5 @@
+from import_file import import_file
 import pulp
-
 
 def print_schedule(x):
     """Print the schedule in a human-readable format using color."""
@@ -72,18 +72,24 @@ def print_2d_schedule(matrix_dict):
         )
         print(schedule_row)
 
+d = import_file()
+d = d[0][0]
 
 # Define the length of the schedule, for example, an 8-hour workday has 32 blocks
 T = 46
 E = 8
 
 # Define the LP problem
-prob = pulp.LpProblem("Minimize_Breaks", pulp.LpMaximize)
+prob = pulp.LpProblem("Minimize_Breaks", pulp.LpMinimize)
 
 # Decision variables
 x = pulp.LpVariable.dicts(
     "Block", [(x, y) for x in range(E) for y in range(T)], 0, 3, cat=pulp.LpInteger
 )  # Value from 0 to 3
+
+u = pulp.LpVariable.dicts(
+    "Positive Difference", range(T), lowBound=0, cat=pulp.LpInteger
+) 
 
 # Channels
 n = pulp.LpVariable.dicts(
@@ -111,9 +117,14 @@ end_almuerzo = pulp.LpVariable.dicts(
 )  # 1 for end of lunch, 0 otherwise
 
 # Objective function: Maximize work blocks.
-prob += pulp.lpSum([w[(i, j)] for i in range(E) for j in range(T)])
+# prob += pulp.lpSum([w[(i, j)] for i in range(E) for j in range(T)])
+prob += pulp.lpSum(u[i] for i in range(T))
 
 # Constraints
+
+for i in range(T):
+    prob += u[i] >= d[i] - pulp.lpSum(w[(k, i)] for k in range(E))
+
 
 for k in range(E):
     # 1. Los empleados deben trabajar mínimo 1 hora de forma continua para poder
@@ -230,7 +241,7 @@ for i in range(T):
 # prob += l[29] == 1
 
 # Solve the problem
-prob.solve(pulp.PULP_CBC_CMD(timeLimit=60))  # Set a time limit of 60 seconds
+prob.solve(pulp.PULP_CBC_CMD(timeLimit=600))  # Set a time limit of 60 seconds
 
 # Check the solver status
 if pulp.LpStatus[prob.status] == "Optimal":
@@ -238,5 +249,9 @@ if pulp.LpStatus[prob.status] == "Optimal":
 
     # Display results functions
     print_2d_schedule(x)
+    print("\n")
+    # for i in u.values():
+    #     print(">> U:", i.varValue)
+    print("Objective =", pulp.value(prob.objective))
 else:
     print("Could not find an optimal solution.")
