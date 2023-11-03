@@ -1,7 +1,7 @@
 import pandas as pd
 
 def import_file():
-    route="/mnt/d/Repos/dataton/dataton2023-Los_anyaalists/files/Dataton 2023 Etapa 1.xlsx"
+    route="/mnt/d/Repos/dataton/dataton2023-Los_anyaalists/src/files/Dataton 2023 Etapa 1.xlsx"
     demandData=pd.read_excel(route,sheet_name="demand")
     workerData=pd.read_excel(route,sheet_name="workers")
     Sucursales=pd.unique(demandData['suc_cod'])
