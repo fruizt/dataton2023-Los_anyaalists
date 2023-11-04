@@ -41,8 +41,7 @@ prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
 # Constraints
 
 for i in range(SCHEDULE):
-    prob += pd[i] >= DEMAND_DICTIONARY[i] - pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES))
-
+    prob += pd[i] >= DEMAND_DICTIONARY[i] - pulp.lpSum(w[(d, k, i)] for d in range(DAYS) for k in range(EMPLOYEES))
 
 for d in range(DAYS):
 
@@ -60,16 +59,12 @@ for d in range(DAYS):
 
         for i in range(4, SCHEDULE):
             # (Breaks can only occur after at least 4 consecutive work blocks.)
-            prob += 4 * b[(d, k, i)] <= pulp.lpSum([w[(d, i - j)] for j in range(1, 5)])
+            prob += 4 * b[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] for j in range(1, 5)])
             # (Lunch can only begin after at least 4 consecutive work blocks.)
-            prob += 4 * l[(d, k, i)] <= pulp.lpSum(
-                [w[(d, i - j)] + l[(d, i - j)] for j in range(1, 5)]
-            )
+            prob += 4 * l[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)])
 
             # (End can only happen with at least 4 consecutive work blocks.)
-            prob += 4 * end_active[(d, k, i)] <= pulp.lpSum(
-                [w[(d, i - j)] for j in range(0, 4)]
-            )
+            prob += 4 * end_active[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] for j in range(0, 4)])
 
         # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a
         #    una pausa activa. Esto quiere decir que, si un empleado ha trabajado 8
@@ -78,7 +73,7 @@ for d in range(DAYS):
 
         for i in range(SCHEDULE - 8):
             # (No more than 8 work blocks in a 9-long segment.)
-            prob += pulp.lpSum([w[(d, i + j)] for j in range(9)]) <= 8
+            prob += pulp.lpSum([w[(d, k, i + j)] for j in range(9)]) <= 8
 
         # 3. El tiempo de almuerzo debe tomarse de forma CONTINUA y es de 1 hora y
         #    media. Se debe tomar almuerzo una única vez en el día.
@@ -88,7 +83,7 @@ for d in range(DAYS):
 
         # (Ensure the lunch block is continuous.)
         for i in range(SCHEDULE - 1):
-            prob += l[(d, k, i)] <= l[(d, i + 1)] + end_almuerzo[(d, k, i)]
+            prob += l[(d, k, i)] <= l[(d, k, i + 1)] + end_almuerzo[(d, k, i)]
         prob += pulp.lpSum(end_almuerzo[(d, k, i)] for i in range(SCHEDULE)) == 1
 
         # 4. La hora mínima de salida para tomar el almuerzo son las 11:30 am y la hora
@@ -125,7 +120,7 @@ for d in range(DAYS):
         for i in range(SCHEDULE - 1):
             prob += a[(d, k, i)] <= a[(d, i + 1)] + end_active[(d, k, i)]
 
-        prob += end_active[(d, SCHEDULE - 1)] == a[(d, SCHEDULE - 1)]
+        prob += end_active[(d, k, SCHEDULE - 1)] == a[(d, k, SCHEDULE - 1)]
 
         # (Ensure there is only one end block)
         prob += pulp.lpSum(end_active[(d, k, i)] for i in range(SCHEDULE)) == 1
@@ -152,8 +147,8 @@ for d in range(DAYS):
 #    horaria.
 
 # (There is at least 1 work block per column.)
-for i in range(SCHEDULE):
-    prob += pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= 1
+    for i in range(SCHEDULE):
+        prob += pulp.lpSum(w[(d, k, i)] for k in range(EMPLOYEES)) >= 1
 
 # Test
 
