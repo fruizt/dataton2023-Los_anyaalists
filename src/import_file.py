@@ -16,7 +16,7 @@ def import_file():
     return demand
 
 def import_file_etapa2():
-    file_path = '/mnt/d/Repos/dataton/dataton2023-Los_anyaalists/src/files/Dataton 2023 Etapa 2.xlsx'
+    file_path = r"C:\Repos\dataton2023-Los_anyaalists\src\files\Dataton 2023 Etapa 2.xlsx"
     xl = pd.ExcelFile(file_path)
     demand_data = xl.parse(sheet_name='demand')
     workers_data = xl.parse(sheet_name='workers')
