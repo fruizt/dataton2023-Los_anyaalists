@@ -1,3 +1,43 @@
+def print_3d_schedule(matrix_dict):
+    """Print a 3D schedule (including days) in a human-readable format using color."""
+
+    # Define ANSI escape sequences for colors
+    GREEN = "\033[92m"
+    BLUE = "\033[94m"
+    YELLOW = "\033[93m"
+    END = "\033[0m"  # Reset color to default
+
+    symbols = {
+        0: "  ",  # For 'Nothing', we print two spaces to keep alignment
+        1: f"{GREEN}██{END}",  # Work in green
+        2: f"{BLUE}██{END}",  # Break in blue
+        3: f"{YELLOW}██{END}",  # Lunch in yellow
+    }
+
+    # Extract unique days, rows (employees), and columns (time blocks) from the dictionary keys
+    days = sorted(set([key[0] for key in matrix_dict.keys()]))
+    rows = sorted(set([key[1] for key in matrix_dict.keys()]))
+    cols = sorted(set([key[2] for key in matrix_dict.keys()]))
+
+    # Define day names for printing
+    day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+    for d in days:
+        # Print the day header
+        print(f"\n{day_names[d]} Schedule:")
+        # Print column headers for time blocks
+        column_headers = "   " + " ".join(str(c).zfill(2) for c in cols)
+        print(column_headers)
+
+        # Iterate over each row (employee) and print its schedule for the day
+        for r in rows:
+            row_data = [int(matrix_dict.get((d, r, c), 0)) for c in cols]  # Defaulting to 0 if the key isn't present
+            schedule_row = f"{str(r).zfill(2)} " + " ".join(
+                symbols[int(value)] for value in row_data
+            )
+            print(schedule_row)
+
+
 def print_2d_schedule(matrix_dict):
     """Print a 2D schedule in a human-readable format using color."""
 

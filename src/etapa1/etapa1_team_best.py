@@ -2,24 +2,26 @@ from src.print_schedules import print_2d_schedule
 from src.import_file import import_file
 import pulp
 
+path_to_glkp = "/usr/local/lib"
+
 # Import demand Data
 d = import_file()
 d = d[0][0]
 
 # Define the length of the schedule, for example, an 8-hour workday has 32 blocks
 T = 46
-E = 8
+E = 6
 
 # Define the LP problem
 prob = pulp.LpProblem("Minimize_Breaks", pulp.LpMinimize)
 
 # Decision variables
 x = pulp.LpVariable.dicts(
-    "Block", [(x, y) for x in range(E) for y in range(T)], 0, 3, cat=pulp.LpInteger
+    "Block", [(x, y) for x in range(E) for y in range(T)], 0, 3, cat=pulp.LpContinuous
 )  # Value from 0 to 3
 
 pd = pulp.LpVariable.dicts(
-    "Positive Difference", range(T), lowBound=0, cat=pulp.LpInteger
+    "Positive Difference", range(T), lowBound=0, cat=pulp.LpContinuous
 ) 
 
 # Channels
@@ -172,7 +174,7 @@ for i in range(T):
 # prob += l[29] == 1
 
 # Solve the problem
-prob.solve(pulp.PULP_CBC_CMD(timeLimit=10))  # Set a time limit of 60 seconds
+prob.solve(pulp.GLPK_CMD(timeLimit=60))  # Set a time limit of 60 seconds
 
 # Check the solver status
 if pulp.LpStatus[prob.status] == "Optimal":
@@ -181,8 +183,6 @@ if pulp.LpStatus[prob.status] == "Optimal":
     # Display results functions
     print_2d_schedule(x)
     print("\n")
-    # for i in u.values():
-    #     print(">> U:", i.varValue)
     print("Objective =", pulp.value(prob.objective))
 else:
     print("Could not find an optimal solution.")

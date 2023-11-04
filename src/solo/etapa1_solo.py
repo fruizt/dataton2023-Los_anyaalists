@@ -159,7 +159,7 @@ for i in range(T):
 # prob += l[29] == 1
 
 # Solve the problem
-prob.solve()
+prob.solve(pulp.GLPK_CMD())
 
 # Check the solver status
 if pulp.LpStatus[prob.status] == "Optimal":
