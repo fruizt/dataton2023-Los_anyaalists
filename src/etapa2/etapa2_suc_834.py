@@ -41,7 +41,7 @@ prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
 # Constraints
 
 for i in range(SCHEDULE):
-    prob += pd[i] >= DEMAND_DICTIONARY[i] - pulp.lpSum(w[(d, k, i)] for d in range(DAYS) for k in range(EMPLOYEES))
+    prob += pd[i] >= DEMAND_ARRAY[i] - pulp.lpSum(w[(d, k, i)] for d in range(DAYS) for k in range(EMPLOYEES))
 
 for d in range(DAYS):
 
