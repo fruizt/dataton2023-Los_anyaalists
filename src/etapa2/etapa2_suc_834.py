@@ -31,10 +31,9 @@ l = pulp.LpVariable.dicts("Lunch", [(x, y, z) for x in range(DAYS) for y in rang
 
 # Status
 a = pulp.LpVariable.dicts("Active", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for active, 0 otherwise
-end_active = pulp.LpVariable.dicts("end_active", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of active, 0 otherwise
-end_almuerzo = pulp.LpVariable.dicts("end_almuerzo", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of lunch, 0 otherwise
+end_active = pulp.LpVariable.dicts("end_active", [(y, z) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of active, 0 otherwise
+end_almuerzo = pulp.LpVariable.dicts("end_almuerzo", [(y, z) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of lunch, 0 otherwise
 
-start_work = pulp.LpVariable.dicts("start_work_day", [(x, y) for x in range(DAYS) for y in range(EMPLOYEES)], cat=pulp.LpBinary)  # 1 for end of active, 0 otherwise
 # Objective function: Maximize work blocks.
 prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
 
@@ -45,9 +44,8 @@ for i in range(SCHEDULE):
 
 for d in range(DAYS):
 
-    for k in range(EMPLOYEES):
+    for k in demand_workers[834]["TC"]:
 
-        prob += start_work[(d, k)] == w[(d, k, 0)] 
         # prob += end_active[(k, SCHEDULE - 1)] == a[(k, SCHEDULE - 1)]
         # 1. Los empleados deben trabajar mínimo 1 hora de forma continua para poder
         #    salir a una Pausa Activa o Almuerzo. Esto quiere decir que, si un empleado
@@ -70,6 +68,7 @@ for d in range(DAYS):
         #    una pausa activa. Esto quiere decir que, si un empleado ha trabajado 8
         #    franjas horarias, en la 9 franja horaria SÍ debe salir a Pausa Activa o
         #    Almuerzo.
+
 
         for i in range(SCHEDULE - 8):
             # (No more than 8 work blocks in a 9-long segment.)
