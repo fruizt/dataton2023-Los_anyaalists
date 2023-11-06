@@ -1,33 +1,37 @@
-from src.print_schedules import print_2d_schedule
+from src.print_schedules import print_3d_schedule
 from src.import_file import import_file_etapa2
 import numpy as np
 import pulp
 
-
 # Solver configuration
-solver = pulp.getSolver('PULP_CBC_CMD', threads=16)
+solver = pulp.getSolver('PULP_CBC_CMD', threads=16, timeLimit=400 ,gapRel=0.01, keepFiles = True)
 
 # Import demand and workers data
 demand_workers = import_file_etapa2()
 
 # Define the length of the schedule, for example, an 8-hour workday has 32 blocks
-WORKERS = np.concatenate((demand_workers[834]["TC"], demand_workers[834]["MT"]))
-
-print("Workers:", WORKERS)
+WORKERS =demand_workers[834]["TC"] + demand_workers[834]["MT"]
 
 DEMAND_DICTIONARY = demand_workers[834]["days"]
 DEMAND_ARRAY = demand_workers[834]["demands"]
+
+def is_full_time_worker(worker):
+    try:
+        demand_workers[834]["TC"].index(worker)
+        return True
+    except:
+        return False
 
 EMPLOYEES = len(demand_workers[834]["TC"]) + len(demand_workers[834]["MT"])
 DAYS = 5 #len(demand_workers[834]["days"])
 SCHEDULE = 49
 
 # Define the LP problem
-prob = pulp.LpProblem("Minimize_Breaks", pulp.LpMinimize)
+prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
 
 # Decision variables
 x = pulp.LpVariable.dicts("Block", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], 0, 3, cat=pulp.LpInteger)
-pd = pulp.LpVariable.dicts("Positive Difference", range(SCHEDULE), lowBound=0, cat=pulp.LpInteger)
+pd = pulp.LpVariable.dicts("Positive Difference", [(x, z) for x in range(DAYS) for z in range(SCHEDULE)], lowBound=0, cat=pulp.LpInteger)
 
 # Channels
 n = pulp.LpVariable.dicts("Nothing", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for not working, 0 otherwise
@@ -36,25 +40,24 @@ b = pulp.LpVariable.dicts("Break", [(x, y, z) for x in range(DAYS) for y in rang
 l = pulp.LpVariable.dicts("Lunch", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for lunch, 0 otherwise
 
 # Status
-a = pulp.LpVariable.dicts("Active", [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for active, 0 otherwise
+a = pulp.LpVariable.dicts("Active", [(y, z) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for active, 0 otherwise
 end_active = pulp.LpVariable.dicts("end_active", [(y, z) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of active, 0 otherwise
 end_almuerzo = pulp.LpVariable.dicts("end_almuerzo", [(y, z) for y in range(EMPLOYEES) for z in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of lunch, 0 otherwise
 
-# Objective function: Maximize work blocks.
-prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
+# Objective function: Minimize pd.
+prob += pulp.lpSum(pd[(x, i)] for x in range(DAYS) for i in range(SCHEDULE))
 
 # Constraints
 
-for i in range(SCHEDULE):
-    prob += pd[i] >= DEMAND_ARRAY[i] - pulp.lpSum(w[(d, k, i)] for d in range(DAYS) for k in range(EMPLOYEES))
-
 for d in range(DAYS):
 
-    for element in demand_workers[834]["TC"]:
+    for i in range(SCHEDULE):
+        prob += pd[(d, i)] >= DEMAND_ARRAY[(d * 49) + i] - pulp.lpSum(w[(d, k, i)] for k in range(EMPLOYEES))
 
-        k = demand_workers[834]["TC"].index(element)
+    for worker in WORKERS:
 
-        # prob += end_active[(k, SCHEDULE - 1)] == a[(k, SCHEDULE - 1)]
+        k = WORKERS.index(worker)
+
         # 1. Los empleados deben trabajar mínimo 1 hora de forma continua para poder
         #    salir a una Pausa Activa o Almuerzo. Esto quiere decir que, si un empleado
         #    solo ha trabajado 3 franjas horarias, en la 4 franja horaria NO debe salir
@@ -67,48 +70,55 @@ for d in range(DAYS):
             # (Breaks can only occur after at least 4 consecutive work blocks.)
             prob += 4 * b[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] for j in range(1, 5)])
             # (Lunch can only begin after at least 4 consecutive work blocks.)
-            prob += 4 * l[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)])
+            if is_full_time_worker(worker):
+                prob += 4 * l[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)])
 
-            # (End can only happen with at least 4 consecutive work blocks.)
+            # (End can only happe+n with at least 4 consecutive work blocks.)
             prob += 4 * end_active[(k, i)] <= pulp.lpSum([w[(d, k, i - j)] for j in range(0, 4)])
 
-        # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a
-        #    una pausa activa. Esto quiere decir que, si un empleado ha trabajado 8
-        #    franjas horarias, en la 9 franja horaria SÍ debe salir a Pausa Activa o
-        #    Almuerzo.
-
+            # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a
+            #    una pausa activa. Esto quiere decir que, si un empleado ha trabajado 8
+            #    franjas horarias, en la 9 franja horaria SÍ debe salir a Pausa Activa o
 
         for i in range(SCHEDULE - 8):
             # (No more than 8 work blocks in a 9-long segment.)
             prob += pulp.lpSum([w[(d, k, i + j)] for j in range(9)]) <= 8
+        
 
-        # 3. El tiempo de almuerzo debe tomarse de forma CONTINUA y es de 1 hora y
-        #    media. Se debe tomar almuerzo una única vez en el día.
+        if is_full_time_worker(worker):
+            #    Almuerzo.
+            # 3. El tiempo de almuerzo debe tomarse de forma CONTINUA y es de 1 hora y
+            #    media. Se debe tomar almuerzo una única vez en el día.
 
-        # (Ensure 6 blocks of lunch.)
-        prob += pulp.lpSum([l[(d, k, i)] for i in range(SCHEDULE)]) == 6
+            # (Ensure 6 blocks of lunch.)
+            prob += pulp.lpSum([l[(d, k, i)] for i in range(SCHEDULE)]) == 6
 
-        # (Ensure the lunch block is continuous.)
-        for i in range(SCHEDULE - 1):
-            prob += l[(d, k, i)] <= l[(d, k, i + 1)] + end_almuerzo[(k, i)]
-        prob += pulp.lpSum(end_almuerzo[(k, i)] for i in range(SCHEDULE)) == 1
+            # (Ensure the lunch block is continuous.)
+            for i in range(SCHEDULE - 1):
+                prob += l[(d, k, i)] <= l[(d, k, i + 1)] + end_almuerzo[(k, i)]
+            prob += pulp.lpSum(end_almuerzo[(k, i)] for i in range(SCHEDULE)) == 1
 
-        # 4. La hora mínima de salida para tomar el almuerzo son las 11:30 am y la hora
-        #    máxima para salir a tomar el almuerzo es a la 1:30 pm.
-        #    Esto quiere decir que:
-        #      i. Una persona NO puede salir a tomar almuerzo a las 11:15 am
-        #      ii. Una persona NO puede salir a tomar almuerzo a la 1:45 pm
-        #      iii. Es VÁLIDO que una persona tome almuerzo de la 1:30 pm a las 3:00
+            # 4. La hora mínima de salida para tomar el almuerzo son las 11:30 am y la hora
+            #    máxima para salir a tomar el almuerzo es a la 1:30 pm.
+            #    Esto quiere decir que:
+            #      i. Una persona NO puede salir a tomar almuerzo a las 11:15 am
+            #      ii. Una persona NO puede salir a tomar almuerzo a la 1:45 pm
+            #      iii. Es VÁLIDO que una persona tome almuerzo de la 1:30 pm a las 3:00
 
-        # (Ensure no lunch outside of valid hours.)
-        prob += pulp.lpSum([l[(d, k, i)] for i in range(16)]) == 0
-        prob += pulp.lpSum([l[(d, k, i)] for i in range(30, SCHEDULE)]) == 0
+            # (Ensure no lunch outside of valid hours.)
+            prob += pulp.lpSum([l[(d, k, i)] for i in range(16)]) == 0
+            prob += pulp.lpSum([l[(d, k, i)] for i in range(30, SCHEDULE)]) == 0
 
-        # 5. La jornada laboral de todos los empleados de es 8 horas diarias. Los
-        #    estados de Trabaja y Pausa Activa hacen parte de la jornada laboral. El
-        #    tiempo de almuerzo NO constituye tiempo de jornada laboral.
-        # (Ensure 32 blocks of work or breaks.)
-        prob += pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)]) == 32
+            # 5. La jornada laboral de todos los empleados de es 8 horas diarias si es de TC, en otro caso es de 4 horas. Los
+            #    estados de Trabaja y Pausa Activa hacen parte de la jornada laboral. El
+            #    tiempo de almuerzo NO constituye tiempo de jornada laboral.
+            # (Ensure 32 blocks of work or breaks.)
+            prob += pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)]) == 32
+        else:
+            prob += pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)]) == 16
+
+            prob += pulp.lpSum([l[(d, k, i)] for i in range(SCHEDULE)]) == 0
+
 
         # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la
         #    jornada laboral del empleado este solo puede estar en los estados de
@@ -118,16 +128,16 @@ for d in range(DAYS):
 
         # (Define active periods.)
         for i in range(SCHEDULE):
-            prob += a[(d, k, i)] >= w[(d, k, i)]
-            prob += a[(d, k, i)] >= b[(d, k, i)]
-            prob += a[(d, k, i)] >= l[(d, k, i)]
-            prob += a[(d, k, i)] <= w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)]
+            prob += a[(k, i)] >= w[(d, k, i)]
+            prob += a[(k, i)] >= b[(d, k, i)]
+            prob += a[(k, i)] >= l[(d, k, i)]
+            prob += a[(k, i)] <= w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)]
 
         # (Ensure the active block is continuous.)
         for i in range(SCHEDULE - 1):
-            prob += a[(d, k, i)] <= a[(d, k, i + 1)] + end_active[(k, i)]
+            prob += a[(k, i)] <= a[(k, i + 1)] + end_active[(k, i)]
 
-        prob += end_active[(k, SCHEDULE - 1)] == a[(d, k, SCHEDULE - 1)]
+        prob += end_active[(k, SCHEDULE - 1)] == a[(k, SCHEDULE - 1)]
 
         # (Ensure there is only one end block)
         prob += pulp.lpSum(end_active[(k, i)] for i in range(SCHEDULE)) == 1
@@ -166,15 +176,17 @@ for d in range(DAYS):
 # prob += l[29] == 1
 
 # Solve the problem
-# prob.solve(solver)
+
+prob.solve(solver)
 
 # Check the solver status
 if pulp.LpStatus[prob.status] == "Optimal":
     print("Found an optimal solution!")
 
     # Display results functions
-    print_2d_schedule(x)
+    print_3d_schedule(x)
     print("\n")
     print("Objective =", pulp.value(prob.objective))
 else:
+    print_3d_schedule(x)
     print("Could not find an optimal solution.")

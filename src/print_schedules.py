@@ -1,3 +1,15 @@
+import csv
+import pandas as pd
+import numpy as np
+
+def write_array_to_csv(array, file_path):
+    np.savetxt(file_path, array, delimiter=',')
+
+def write_matrix_to_csv(matrix, file_path):
+    with open(file_path, 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerows(matrix)
+
 def print_3d_schedule(matrix_dict):
     """Print a 3D schedule (including days) in a human-readable format using color."""
 
@@ -20,7 +32,7 @@ def print_3d_schedule(matrix_dict):
     cols = sorted(set([key[2] for key in matrix_dict.keys()]))
 
     # Define day names for printing
-    day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
     for d in days:
         # Print the day header
@@ -31,7 +43,7 @@ def print_3d_schedule(matrix_dict):
 
         # Iterate over each row (employee) and print its schedule for the day
         for r in rows:
-            row_data = [int(matrix_dict.get((d, r, c), 0)) for c in cols]  # Defaulting to 0 if the key isn't present
+            row_data = [int(matrix_dict.get((d, r, c), 0).varValue) for c in cols]  # Defaulting to 0 if the key isn't present
             schedule_row = f"{str(r).zfill(2)} " + " ".join(
                 symbols[int(value)] for value in row_data
             )
