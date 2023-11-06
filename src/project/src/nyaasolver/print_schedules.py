@@ -1,17 +1,3 @@
-import csv
-import numpy as np
-
-
-def write_array_to_csv(array, file_path):
-    np.savetxt(file_path, array, delimiter=",")
-
-
-def write_matrix_to_csv(matrix, file_path):
-    with open(file_path, "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerows(matrix)
-
-
 def print_3d_schedule(matrix_dict):
     """Print a 3D schedule (including days) in a human-readable format using color."""
 

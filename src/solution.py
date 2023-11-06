@@ -1,3 +1,3 @@
-import nyaasolver.test as test  
+import nyaasolver.etapa2.main as etapa2  
 
-test.printing()
+etapa2.solve_optimization()
