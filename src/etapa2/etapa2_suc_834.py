@@ -13,7 +13,7 @@ DEMAND_DICTIONARY = demand_workers[834]["days"]
 DEMAND_ARRAY = demand_workers[834]["demands"]
 
 EMPLOYEES = len(demand_workers[834]["TC"]) + len(demand_workers[834]["MT"])
-DAYS = len(demand_workers[834]["days"])
+DAYS = 5 #len(demand_workers[834]["days"])
 SCHEDULE = 49
 
 # Define the LP problem
@@ -44,7 +44,9 @@ for i in range(SCHEDULE):
 
 for d in range(DAYS):
 
-    for k in demand_workers[834]["TC"]:
+    for element in demand_workers[834]["TC"]:
+
+        k = demand_workers[834]["TC"].index(element)
 
         # prob += end_active[(k, SCHEDULE - 1)] == a[(k, SCHEDULE - 1)]
         # 1. Los empleados deben trabajar mínimo 1 hora de forma continua para poder
@@ -62,7 +64,7 @@ for d in range(DAYS):
             prob += 4 * l[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)])
 
             # (End can only happen with at least 4 consecutive work blocks.)
-            prob += 4 * end_active[(d, k, i)] <= pulp.lpSum([w[(d, k, i - j)] for j in range(0, 4)])
+            prob += 4 * end_active[(k, i)] <= pulp.lpSum([w[(d, k, i - j)] for j in range(0, 4)])
 
         # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a
         #    una pausa activa. Esto quiere decir que, si un empleado ha trabajado 8
@@ -82,8 +84,8 @@ for d in range(DAYS):
 
         # (Ensure the lunch block is continuous.)
         for i in range(SCHEDULE - 1):
-            prob += l[(d, k, i)] <= l[(d, k, i + 1)] + end_almuerzo[(d, k, i)]
-        prob += pulp.lpSum(end_almuerzo[(d, k, i)] for i in range(SCHEDULE)) == 1
+            prob += l[(d, k, i)] <= l[(d, k, i + 1)] + end_almuerzo[(k, i)]
+        prob += pulp.lpSum(end_almuerzo[(k, i)] for i in range(SCHEDULE)) == 1
 
         # 4. La hora mínima de salida para tomar el almuerzo son las 11:30 am y la hora
         #    máxima para salir a tomar el almuerzo es a la 1:30 pm.
@@ -117,18 +119,18 @@ for d in range(DAYS):
 
         # (Ensure the active block is continuous.)
         for i in range(SCHEDULE - 1):
-            prob += a[(d, k, i)] <= a[(d, i + 1)] + end_active[(d, k, i)]
+            prob += a[(d, k, i)] <= a[(d, k, i + 1)] + end_active[(k, i)]
 
-        prob += end_active[(d, k, SCHEDULE - 1)] == a[(d, k, SCHEDULE - 1)]
+        prob += end_active[(k, SCHEDULE - 1)] == a[(d, k, SCHEDULE - 1)]
 
         # (Ensure there is only one end block)
-        prob += pulp.lpSum(end_active[(d, k, i)] for i in range(SCHEDULE)) == 1
+        prob += pulp.lpSum(end_active[(k, i)] for i in range(SCHEDULE)) == 1
 
         # 7. El último estado de la jornada laboral de los empleados debe ser Trabaja.
 
         # (Work should be 1 when end_active is 1.)
         for i in range(SCHEDULE):
-            prob += w[(d, k, i)] >= end_active[(d, k, i)]
+            prob += w[(d, k, i)] >= end_active[(k, i)]
 
         # 9. Cualquier franja de trabajo debe durar entre 1 y 2 horas.
         # NOOP: Inferred from previous restrictions.

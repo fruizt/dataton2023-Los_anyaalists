@@ -16,7 +16,8 @@ def import_file():
     return demand
 
 def import_file_etapa2():
-    file_path = r"C:\Repos\dataton2023-Los_anyaalists\src\files\Dataton 2023 Etapa 2.xlsx"
+    # file_path = r"C:\Repos\dataton2023-Los_anyaalists\src\files\Dataton 2023 Etapa 2.xlsx"
+    file_path = "/mnt/c/Repos/dataton2023-Los_anyaalists/src/files/Dataton 2023 Etapa 2.xlsx"
     xl = pd.ExcelFile(file_path)
     demand_data = xl.parse(sheet_name='demand')
     workers_data = xl.parse(sheet_name='workers')
@@ -41,4 +42,4 @@ def import_file_etapa2():
                 branch_info[branch_code]['days'][date].append(demand['demanda'])
     return branch_info
 
-print(import_file_etapa2())
+# print(import_file_etapa2())
