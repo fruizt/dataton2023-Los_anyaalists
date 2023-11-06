@@ -19,7 +19,7 @@ x = pulp.LpVariable.dicts(
 
 pd = pulp.LpVariable.dicts(
     "Positive Difference", range(T), lowBound=0, cat=pulp.LpInteger
-) 
+)
 
 # Channels
 n = pulp.LpVariable.dicts(
@@ -173,7 +173,7 @@ if pulp.LpStatus[prob.status] == "Optimal":
     print_schedule_bin(l)
     print_schedule_bin(a)
     print_schedule_bin(end_active)
-   
+
     print("Objective =", pulp.value(prob.objective))
 else:
     print("Could not find an optimal solution.")

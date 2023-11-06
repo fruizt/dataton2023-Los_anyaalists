@@ -6,10 +6,11 @@ import pulp
 demand_workers = import_file_etapa2()
 
 # Solver configuration
-solver = pulp.getSolver('PULP_CBC_CMD', threads=16, timeLimit=30 ,gapRel=0.01)
+solver = pulp.getSolver("PULP_CBC_CMD", threads=16, timeLimit=30, gapRel=0.01)
 
 # Define the length of the schedule, for example, an 8-hour workday has 32 blocks
 DEMAND_ARRAY = demand_workers[834]["demands"]
+
 
 def is_full_time_worker(worker):
     try:
@@ -18,10 +19,11 @@ def is_full_time_worker(worker):
     except:
         return False
 
+
 SCHEDULE = 29
 EMPLOYEES = len(demand_workers[834]["TC"]) + len(demand_workers[834]["MT"])
 
-WORKERS =demand_workers[834]["TC"] + demand_workers[834]["MT"]
+WORKERS = demand_workers[834]["TC"] + demand_workers[834]["MT"]
 
 MAX_WORK_BLOCKS_TC = 20
 MAX_WORK_BLOCKS_MT = 16
@@ -30,19 +32,51 @@ MAX_WORK_BLOCKS_MT = 16
 prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
 
 # Decision variables
-x = pulp.LpVariable.dicts("Block", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], 0, 3, cat=pulp.LpInteger)  # Value from 0 to 3
+x = pulp.LpVariable.dicts(
+    "Block",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    0,
+    3,
+    cat=pulp.LpInteger,
+)  # Value from 0 to 3
 
-pd = pulp.LpVariable.dicts("Positive Difference", range(SCHEDULE), lowBound=0, cat=pulp.LpInteger) 
+pd = pulp.LpVariable.dicts(
+    "Positive Difference", range(SCHEDULE), lowBound=0, cat=pulp.LpInteger
+)
 
 # Channels
-n = pulp.LpVariable.dicts("Nothing", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for not working, 0 otherwise
-w = pulp.LpVariable.dicts("Work", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for working, 0 otherwise
-b = pulp.LpVariable.dicts("Break", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for active pause, 0 otherwise
+n = pulp.LpVariable.dicts(
+    "Nothing",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    cat=pulp.LpBinary,
+)  # 1 for not working, 0 otherwise
+w = pulp.LpVariable.dicts(
+    "Work",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    cat=pulp.LpBinary,
+)  # 1 for working, 0 otherwise
+b = pulp.LpVariable.dicts(
+    "Break",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    cat=pulp.LpBinary,
+)  # 1 for active pause, 0 otherwise
 
 # Status
-a = pulp.LpVariable.dicts("Active", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for active, 0 otherwise
-end_active = pulp.LpVariable.dicts("end_active", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of active, 0 otherwise
-end_almuerzo = pulp.LpVariable.dicts("end_almuerzo", [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)], cat=pulp.LpBinary)  # 1 for end of lunch, 0 otherwise
+a = pulp.LpVariable.dicts(
+    "Active",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    cat=pulp.LpBinary,
+)  # 1 for active, 0 otherwise
+end_active = pulp.LpVariable.dicts(
+    "end_active",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    cat=pulp.LpBinary,
+)  # 1 for end of active, 0 otherwise
+end_almuerzo = pulp.LpVariable.dicts(
+    "end_almuerzo",
+    [(x, y) for x in range(EMPLOYEES) for y in range(SCHEDULE)],
+    cat=pulp.LpBinary,
+)  # 1 for end of lunch, 0 otherwise
 
 # Objective function: Minimize pd.
 prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
@@ -50,10 +84,11 @@ prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
 # Constraints
 
 for i in range(SCHEDULE):
-    prob += pd[i] >= DEMAND_ARRAY[(5 * 49) + i] - pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES))
+    prob += pd[i] >= DEMAND_ARRAY[(5 * 49) + i] - pulp.lpSum(
+        w[(k, i)] for k in range(EMPLOYEES)
+    )
 
 for worker in WORKERS:
-
     k = WORKERS.index(worker)
 
     # 1. Los empleados deben trabajar mínimo 1 hora de forma continua para poder
@@ -88,10 +123,15 @@ for worker in WORKERS:
     # (Ensure 32 blocks of work or breaks.)
 
     if is_full_time_worker(worker):
-        prob += pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)]) == MAX_WORK_BLOCKS_TC
+        prob += (
+            pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)])
+            == MAX_WORK_BLOCKS_TC
+        )
     else:
-        prob += pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)]) == MAX_WORK_BLOCKS_MT
-
+        prob += (
+            pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)])
+            == MAX_WORK_BLOCKS_MT
+        )
 
     # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la
     #    jornada laboral del empleado este solo puede estar en los estados de
@@ -127,9 +167,7 @@ for worker in WORKERS:
 
     # Channel Decomposition
     for i in range(SCHEDULE):
-        prob += (
-            x[(k, i)] == n[(k, i)] * 0 + w[(k, i)] * 1 + b[(k, i)] * 2
-        )
+        prob += x[(k, i)] == n[(k, i)] * 0 + w[(k, i)] * 1 + b[(k, i)] * 2
         prob += n[(k, i)] + w[(k, i)] + b[(k, i)] == 1
 
 # 8. Debe haber por lo menos 1 empleado en el estado Trabaja en cada franja
@@ -137,7 +175,10 @@ for worker in WORKERS:
 
 # (There is at least 1 work block per column.)
 for i in range(SCHEDULE):
-    prob += DEMAND_ARRAY[(5 * 49) + i] * pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= DEMAND_ARRAY[(5 * 49) + i]
+    prob += (
+        DEMAND_ARRAY[(5 * 49) + i] * pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES))
+        >= DEMAND_ARRAY[(5 * 49) + i]
+    )
     # prob += DEMAND_ARRAY[(5 * 49) + i] - pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= 1*DEMAND_ARRAY[(5 * 49) + i]
 
 # Solve the problem

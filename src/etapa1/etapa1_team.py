@@ -22,7 +22,7 @@ x = pulp.LpVariable.dicts(
 
 pd = pulp.LpVariable.dicts(
     "Positive Difference", range(T), lowBound=0, cat=pulp.LpInteger
-) 
+)
 
 # Channels
 n = pulp.LpVariable.dicts(
