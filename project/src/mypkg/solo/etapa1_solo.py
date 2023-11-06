@@ -1,5 +1,5 @@
-from src.print_schedules import print_schedule, print_schedule_bin
-from src.import_file import import_file
+from mypkg.print_schedules import print_schedule, print_schedule_bin
+from mypkg.import_file import import_file
 import pulp
 
 # Import demand file

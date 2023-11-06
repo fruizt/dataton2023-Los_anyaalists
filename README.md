@@ -37,20 +37,12 @@ On Unix or MacOS:
 source venv/bin/activate
 ```
 
-### Installing the Package
+### Installation
 
-Once the virtual environment is activated, you can install the package using `pip`:
-
-```bash
-pip install .
-```
-
-### Installing Dependencies
-
-This project depends on several third-party libraries. Install them using `pip`:
+Once the virtual environment is activated, you can install the package and its dependencies using `pip`:
 
 ```bash
-pip install -r requirements.txt
+pip install ./project
 ```
 
 ## Usage

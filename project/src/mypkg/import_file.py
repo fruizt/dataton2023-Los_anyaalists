@@ -1,11 +1,8 @@
 import pandas as pd
-import os
-
+from importlib.resources import files
 
 def import_file():
-    relative_path = "files/Dataton 2023 Etapa 1.xlsx"
-    cwd = os.path.dirname(__file__)
-    file_path = os.path.join(cwd, relative_path)
+    file_path = files('mypkg.files').joinpath('Dataton 2023 Etapa 1.xlsx')
     demand_data = pd.read_excel(file_path, sheet_name="demand")
     worker_data = pd.read_excel(file_path, sheet_name="workers")
     sucursales = pd.unique(demand_data["suc_cod"])
@@ -20,9 +17,7 @@ def import_file():
 
 
 def import_file_etapa2():
-    relative_path = "files/Dataton 2023 Etapa 2.xlsx"
-    cwd = os.path.dirname(__file__)
-    file_path = os.path.join(cwd, relative_path)
+    file_path = files('mypkg.files').joinpath('Dataton 2023 Etapa 2.xlsx')
     xl = pd.ExcelFile(file_path)
     demand_data = xl.parse(sheet_name="demand")
     worker_data = xl.parse(sheet_name="workers")

@@ -1,5 +1,5 @@
-from src.print_schedules import print_2d_schedule
-from src.import_file import import_file
+from mypkg.print_schedules import print_2d_schedule
+from mypkg.import_file import import_file
 import pulp
 
 path_to_glkp = "/usr/local/lib"
