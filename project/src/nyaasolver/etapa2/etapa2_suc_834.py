@@ -1,5 +1,5 @@
-from mypkg.print_schedules import print_3d_schedule
-from mypkg.import_file import import_file_etapa2
+from nyaasolver.print_schedules import print_3d_schedule
+from nyaasolver.import_file import import_file_etapa2
 import pulp
 
 # Solver configuration

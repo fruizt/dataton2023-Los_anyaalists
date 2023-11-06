@@ -1,5 +1,5 @@
-from mypkg.print_schedules import print_2d_schedule
-from mypkg.import_file import import_file
+from nyaasolver.print_schedules import print_2d_schedule
+from nyaasolver.import_file import import_file
 import pulp
 
 path_to_glkp = "/usr/local/lib"
@@ -17,11 +17,11 @@ prob = pulp.LpProblem("Minimize_Breaks", pulp.LpMinimize)
 
 # Decision variables
 x = pulp.LpVariable.dicts(
-    "Block", [(x, y) for x in range(E) for y in range(T)], 0, 3, cat=pulp.LpInteger
+    "Block", [(x, y) for x in range(E) for y in range(T)], 0, 3, cat=pulp.LpContinuous
 )  # Value from 0 to 3
 
 pd = pulp.LpVariable.dicts(
-    "Positive Difference", range(T), lowBound=0, cat=pulp.LpInteger
+    "Positive Difference", range(T), lowBound=0, cat=pulp.LpContinuous
 )
 
 # Channels
@@ -174,7 +174,7 @@ for i in range(T):
 # prob += l[29] == 1
 
 # Solve the problem
-prob.solve(pulp.GLPK_CMD())  # Set a time limit of 60 seconds
+prob.solve(pulp.GLPK_CMD(timeLimit=60))  # Set a time limit of 60 seconds
 
 # Check the solver status
 if pulp.LpStatus[prob.status] == "Optimal":

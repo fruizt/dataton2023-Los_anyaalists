@@ -1,5 +1,5 @@
-from mypkg.print_schedules import print_2d_schedule
-from mypkg.import_file import import_file
+from nyaasolver.print_schedules import print_2d_schedule
+from nyaasolver.import_file import import_file
 import pulp
 
 Solver_name = "PULP_CBC_CMD"
