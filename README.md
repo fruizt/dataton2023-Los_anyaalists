@@ -48,7 +48,7 @@ source venv/bin/activate
 Once the virtual environment is activated, you can install the package and its dependencies using `pip`:
 
 ```bash
-pip install ./project
+pip install ./src/project
 ```
 
 ## Usage
@@ -56,7 +56,7 @@ pip install ./project
 To run the script, execute:
 
 ```bash
-python3 solution.py
+python3 ./src/solution.py
 ```
 
 Make sure you are in the project's root directory before running the command.
