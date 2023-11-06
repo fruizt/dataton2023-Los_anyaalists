@@ -15,7 +15,7 @@ This repository contains a Python script for solving linear programming problems
 Before you begin, ensure you have met the following requirements:
 
 - You have a `Windows/Linux/Mac` machine.
-- You have installed Python 3.10
+- You have installed Python 3.10.
 
 ## Installation
 
@@ -25,11 +25,13 @@ To install and run this project, you'll need to follow these steps:
 
 It's good practice to use a virtual environment to avoid conflicts with other projects or system-wide packages. To set up a virtual environment, run:
 
+(Note: You may need to use `python` instead of `python3` depending on your system configuration.)
+
 ```bash
 python3 -m venv venv
 ```
 
-Activate the virtual environment:
+### Activate the virtual environment
 
 On Windows:
 
@@ -67,4 +69,4 @@ We welcome contributions to this project. If you want to contribute, please fork
 
 ## License
 
-This code repository is licensed under the MIT License. See the [LICENSE](LICENSE) for more details.
+This code repository is licensed under the MIT License. Read the [license](LICENSE) for more details.
