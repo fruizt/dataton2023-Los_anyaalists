@@ -1,6 +1,8 @@
 from src.print_schedules import print_2d_schedule
 from src.import_file import import_file_etapa2
+import numpy as np
 import pulp
+
 
 # Solver configuration
 solver = pulp.getSolver('PULP_CBC_CMD', threads=16)
@@ -9,6 +11,10 @@ solver = pulp.getSolver('PULP_CBC_CMD', threads=16)
 demand_workers = import_file_etapa2()
 
 # Define the length of the schedule, for example, an 8-hour workday has 32 blocks
+WORKERS = np.concatenate((demand_workers[834]["TC"], demand_workers[834]["MT"]))
+
+print("Workers:", WORKERS)
+
 DEMAND_DICTIONARY = demand_workers[834]["days"]
 DEMAND_ARRAY = demand_workers[834]["demands"]
 
