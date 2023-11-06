@@ -23,6 +23,9 @@ EMPLOYEES = len(demand_workers[834]["TC"]) + len(demand_workers[834]["MT"])
 
 WORKERS =demand_workers[834]["TC"] + demand_workers[834]["MT"]
 
+MAX_WORK_BLOCKS_TC = 20
+MAX_WORK_BLOCKS_MT = 16
+
 # Define the LP problem
 prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
 
@@ -48,7 +51,6 @@ prob += pulp.lpSum(pd[i] for i in range(SCHEDULE))
 
 for i in range(SCHEDULE):
     prob += pd[i] >= DEMAND_ARRAY[(5 * 49) + i] - pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES))
-
 
 for worker in WORKERS:
 
@@ -86,9 +88,10 @@ for worker in WORKERS:
     # (Ensure 32 blocks of work or breaks.)
 
     if is_full_time_worker(worker):
-        prob += pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)]) == 20
+        prob += pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)]) == MAX_WORK_BLOCKS_TC
     else:
-        prob += pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)]) == 16
+        prob += pulp.lpSum([w[(k, i)] + b[(k, i)] for i in range(SCHEDULE)]) == MAX_WORK_BLOCKS_MT
+
 
     # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la
     #    jornada laboral del empleado este solo puede estar en los estados de
@@ -134,8 +137,8 @@ for worker in WORKERS:
 
 # (There is at least 1 work block per column.)
 for i in range(SCHEDULE):
-    # prob += pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= 1
-    prob += DEMAND_ARRAY[(5 * 49) + i] - pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= -2
+    prob += DEMAND_ARRAY[(5 * 49) + i] * pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= DEMAND_ARRAY[(5 * 49) + i]
+    # prob += DEMAND_ARRAY[(5 * 49) + i] - pulp.lpSum(w[(k, i)] for k in range(EMPLOYEES)) >= 1*DEMAND_ARRAY[(5 * 49) + i]
 
 # Solve the problem
 prob.solve(solver)  # Set a time limit of 60 seconds

@@ -164,7 +164,7 @@ for d in range(DAYS):
 
 # (There is at least 1 work block per column.)
     for i in range(SCHEDULE):
-        prob += pulp.lpSum(w[(d, k, i)] for k in range(EMPLOYEES)) >= 1
+        prob += DEMAND_ARRAY[(d * 49) + i] *  pulp.lpSum(w[(d, k, i)] for k in range(EMPLOYEES)) >= DEMAND_ARRAY[(d * 49) + i] 
 
 # Test
 
