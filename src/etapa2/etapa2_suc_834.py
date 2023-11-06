@@ -1,10 +1,9 @@
 from src.print_schedules import print_3d_schedule
 from src.import_file import import_file_etapa2
-import numpy as np
 import pulp
 
 # Solver configuration
-solver = pulp.getSolver('PULP_CBC_CMD', threads=16, timeLimit=400 ,gapRel=0.01, keepFiles = True)
+solver = pulp.getSolver('PULP_CBC_CMD', threads=16, timeLimit=400 ,gapRel=0.01)
 
 # Import demand and workers data
 demand_workers = import_file_etapa2()
