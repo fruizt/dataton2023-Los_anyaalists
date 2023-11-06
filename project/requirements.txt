@@ -1,4 +1,0 @@
-numpy
-openpyxl
-pandas
-pulp

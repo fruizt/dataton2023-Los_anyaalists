@@ -1,4 +1,10 @@
-# dataton2023-Los_anyaalists
+<div align="center">
+    <h1 align="center">dataton2023-Los_anyaalists</h1>
+</div>
+
+- Juan Pablo Gutiérrez Restrepo
+- Fabian Andres Ruiz Tortello
+- Heldert Villegas Jaramillo
 
 ## Introduction
 
@@ -9,7 +15,7 @@ This repository contains a Python script for solving linear programming problems
 Before you begin, ensure you have met the following requirements:
 
 - You have a `Windows/Linux/Mac` machine.
-- You have installed Python 3.x.
+- You have installed Python 3.10
 
 ## Installation
 
@@ -37,7 +43,7 @@ On Unix or MacOS:
 source venv/bin/activate
 ```
 
-### Installation
+### Installing the Package
 
 Once the virtual environment is activated, you can install the package and its dependencies using `pip`:
 
@@ -61,8 +67,4 @@ We welcome contributions to this project. If you want to contribute, please fork
 
 ## License
 
-[Include information about the license or state if the project is unlicensed.]
-
-## Contact
-
-If you have any questions or feedback, please contact [Project Maintainer or Team Email].
+This code repository is licensed under the MIT License. See the [LICENSE](LICENSE) for more details.
