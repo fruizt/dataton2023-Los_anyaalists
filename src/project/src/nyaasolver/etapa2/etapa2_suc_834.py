@@ -1,9 +1,17 @@
 from nyaasolver.print_schedules import print_3d_schedule
+from nyaasolver.print_schedules import print_3d_schedule_channels
 from nyaasolver.import_file import import_file_etapa2
 import pulp
 
 # Solver configuration
-solver = pulp.getSolver("PULP_CBC_CMD", threads=12, timeLimit=400, gapRel=0.01)
+
+# path_to_cbc = r'C:\Users\test\Desktop\Cbc-releases.2.10.11-w64-msvc17-md\bin\cbc.exe'
+# solver = pulp.getSolver("COIN_CMD", path=path_to_cbc, timeLimit=400, gapRel=0.01)
+
+# solver = pulp.getSolver("PULP_CBC_CMD", threads=12, timeLimit=10, gapRel=0.01)
+
+path_to_cplex = r'C:\Program Files\IBM\ILOG\CPLEX_Studio2211\cplex\bin\x64_win64\cplex.exe'
+solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, timeLimit=15, gapRel=0.01)
 
 # Import demand and workers data
 demand_workers = import_file_etapa2()
@@ -31,13 +39,13 @@ SCHEDULE = 49
 prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
 
 # Decision variables
-x = pulp.LpVariable.dicts(
-    "Block",
-    [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
-    0,
-    3,
-    cat=pulp.LpInteger,
-)
+# x = pulp.LpVariable.dicts(
+#     "Block",
+#     [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
+#     0,
+#     3,
+#     cat=pulp.LpInteger,
+# )
 pd = pulp.LpVariable.dicts(
     "Positive Difference",
     [(x, z) for x in range(DAYS) for z in range(SCHEDULE)],
@@ -203,13 +211,13 @@ for d in range(DAYS):
 
         # Channel Decomposition
         for i in range(SCHEDULE):
-            prob += (
-                x[(d, k, i)]
-                == n[(d, k, i)] * 0
-                + w[(d, k, i)] * 1
-                + b[(d, k, i)] * 2
-                + l[(d, k, i)] * 3
-            )
+            # prob += (
+            #     x[(d, k, i)]
+            #     == n[(d, k, i)] * 0
+            #     + w[(d, k, i)] * 1
+            #     + b[(d, k, i)] * 2
+            #     + l[(d, k, i)] * 3
+            # )
             prob += n[(d, k, i)] + w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] == 1
 
     # 8. Debe haber por lo menos 1 empleado en el estado Trabaja en cada franja
@@ -240,9 +248,11 @@ if pulp.LpStatus[prob.status] == "Optimal":
     print("Found an optimal solution!")
 
     # Display results functions
-    print_3d_schedule(x)
+    #print_3d_schedule(x)
+    print_3d_schedule_channels(w, b, l, n)
     print("\n")
     print("Objective =", pulp.value(prob.objective))
 else:
-    print_3d_schedule(x)
+    print_3d_schedule_channels(w, b, l, n)
+    #print_3d_schedule(x)
     print("Could not find an optimal solution.")
