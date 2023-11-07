@@ -10,6 +10,6 @@ def solve_optimization():
         sucursal_saturday_solution = etapa2_sat.solve_saturday_optimization(demand_workers[sucursal], sucursal)
         objective_function += sucursal_week_solution["objective_function_result"] + sucursal_saturday_solution["objective_function_result"]
         objective_function += sucursal_saturday_solution["objective_function_result"]
-    print(">> only saturday opt:", objective_function)
+    print("FINAL SCORE:", objective_function)
 
 
