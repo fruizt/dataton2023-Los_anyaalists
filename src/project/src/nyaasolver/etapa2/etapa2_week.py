@@ -228,7 +228,7 @@ def solve_week_optimization(demand_workers):
         print_3d_schedule_channels(w, b, l)
         print("\n")
         print("Objective =", pulp.value(prob.objective))
-        return pulp.value(prob.objective)
+        return {"result": (w, b, l), "objective_function_result": pulp.value(prob.objective)}
     else:
         print_3d_schedule_channels(w, b, l)
         print("Could not find an optimal solution.")

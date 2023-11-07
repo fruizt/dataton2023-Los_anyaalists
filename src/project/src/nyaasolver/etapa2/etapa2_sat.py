@@ -164,7 +164,7 @@ def solve_saturday_optimization(demand_workers):
         print_2d_schedule_channels(w, b)
         print("\n")
         print("Objective =", pulp.value(prob.objective))
-        return pulp.value(prob.objective)
+        return {"result": (w, b), "objective_function_result": pulp.value(prob.objective)}
 
     else:
         print_2d_schedule_channels(w, b)
