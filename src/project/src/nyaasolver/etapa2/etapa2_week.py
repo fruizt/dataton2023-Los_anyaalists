@@ -1,6 +1,7 @@
-from nyaasolver.print_schedules import print_3d_schedule
+from nyaasolver.print_schedules import print_3d_schedule_channels
 from nyaasolver.etapa2.helper import is_full_time_worker
 import pulp
+
 
 def solve_week_optimization(demand_workers):
     """Solve the optimization problem from monday to friday."""
@@ -8,26 +9,23 @@ def solve_week_optimization(demand_workers):
     MAX_WORK_BLOCKS_TC = 32
     MAX_WORK_BLOCKS_MT = 16
     SCHEDULE = 49
-    DAYS = 5 
+    DAYS = 5
 
     DEMAND_ARRAY = demand_workers["demands"]
     EMPLOYEES = len(demand_workers["TC"]) + len(demand_workers["MT"])
     WORKERS = demand_workers["TC"] + demand_workers["MT"]
 
     # Solver configuration
-    solver = pulp.getSolver("PULP_CBC_CMD", threads=16, timeLimit=400)    
+    # solver = pulp.getSolver("PULP_CBC_CMD", threads=16, timeLimit=400)
+    path_to_cplex = (
+        r"C:\Program Files\IBM\ILOG\CPLEX_Studio2211\cplex\bin\x64_win64\cplex.exe"
+    )
+    solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, gapRel=0.01)
 
     # Define the LP problem
     prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
 
     # Decision variables
-    x = pulp.LpVariable.dicts(
-        "Block",
-        [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
-        0,
-        3,
-        cat=pulp.LpInteger,
-    )
     pd = pulp.LpVariable.dicts(
         "Positive Difference",
         [(x, z) for x in range(DAYS) for z in range(SCHEDULE)],
@@ -36,24 +34,34 @@ def solve_week_optimization(demand_workers):
     )
 
     # Channels
-    n = pulp.LpVariable.dicts(
-        "Nothing",
-        [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
-        cat=pulp.LpBinary,
-    )  # 1 for not working, 0 otherwise
     w = pulp.LpVariable.dicts(
         "Work",
-        [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
+        [
+            (x, y, z)
+            for x in range(DAYS)
+            for y in range(EMPLOYEES)
+            for z in range(SCHEDULE)
+        ],
         cat=pulp.LpBinary,
     )  # 1 for working, 0 otherwise
     b = pulp.LpVariable.dicts(
         "Break",
-        [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
+        [
+            (x, y, z)
+            for x in range(DAYS)
+            for y in range(EMPLOYEES)
+            for z in range(SCHEDULE)
+        ],
         cat=pulp.LpBinary,
     )  # 1 for active pause, 0 otherwise
     l = pulp.LpVariable.dicts(
         "Lunch",
-        [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
+        [
+            (x, y, z)
+            for x in range(DAYS)
+            for y in range(EMPLOYEES)
+            for z in range(SCHEDULE)
+        ],
         cat=pulp.LpBinary,
     )  # 1 for lunch, 0 otherwise
 
@@ -107,7 +115,7 @@ def solve_week_optimization(demand_workers):
                         [w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)]
                     )
 
-                # (End can only happe+n with at least 4 consecutive work blocks.)
+                # (End can only happen with at least 4 consecutive work blocks.)
                 prob += 4 * end_active[(k, i)] <= pulp.lpSum(
                     [w[(d, k, i - j)] for j in range(0, 4)]
                 )
@@ -149,11 +157,13 @@ def solve_week_optimization(demand_workers):
                 #    tiempo de almuerzo NO constituye tiempo de jornada laboral.
                 # (Ensure 32 blocks of work or breaks.)
                 prob += (
-                    pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)]) == MAX_WORK_BLOCKS_TC
+                    pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)])
+                    == MAX_WORK_BLOCKS_TC
                 )
             else:
                 prob += (
-                    pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)]) == MAX_WORK_BLOCKS_MT
+                    pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)])
+                    == MAX_WORK_BLOCKS_MT
                 )
 
                 prob += pulp.lpSum([l[(d, k, i)] for i in range(SCHEDULE)]) == 0
@@ -193,14 +203,7 @@ def solve_week_optimization(demand_workers):
 
             # Channel Decomposition
             for i in range(SCHEDULE):
-                prob += (
-                    x[(d, k, i)]
-                    == n[(d, k, i)] * 0
-                    + w[(d, k, i)] * 1
-                    + b[(d, k, i)] * 2
-                    + l[(d, k, i)] * 3
-                )
-                prob += n[(d, k, i)] + w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] == 1
+                prob += w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] <= 1
 
         # 8. Debe haber por lo menos 1 empleado en el estado Trabaja en cada franja
         #    horaria.
@@ -222,10 +225,10 @@ def solve_week_optimization(demand_workers):
         print("Found an optimal solution!")
 
         # Display results functions
-        print_3d_schedule(x)
+        print_3d_schedule_channels(w, b, l)
         print("\n")
         print("Objective =", pulp.value(prob.objective))
         return pulp.value(prob.objective)
     else:
-        print_3d_schedule(x)
+        print_3d_schedule_channels(w, b, l)
         print("Could not find an optimal solution.")
