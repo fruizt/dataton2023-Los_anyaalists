@@ -11,7 +11,7 @@ import pulp
 # solver = pulp.getSolver("PULP_CBC_CMD", threads=12, timeLimit=10, gapRel=0.01)
 
 path_to_cplex = r'C:\Program Files\IBM\ILOG\CPLEX_Studio2211\cplex\bin\x64_win64\cplex.exe'
-solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, timeLimit=15, gapRel=0.01)
+solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, gapRel=0.01)
 
 # Import demand and workers data
 demand_workers = import_file_etapa2()
@@ -54,11 +54,11 @@ pd = pulp.LpVariable.dicts(
 )
 
 # Channels
-n = pulp.LpVariable.dicts(
-    "Nothing",
-    [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
-    cat=pulp.LpBinary,
-)  # 1 for not working, 0 otherwise
+# n = pulp.LpVariable.dicts(
+#     "Nothing",
+#     [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
+#     cat=pulp.LpBinary,
+# )  # 1 for not working, 0 otherwise
 w = pulp.LpVariable.dicts(
     "Work",
     [(x, y, z) for x in range(DAYS) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
@@ -125,7 +125,7 @@ for d in range(DAYS):
                     [w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)]
                 )
 
-            # (End can only happe+n with at least 4 consecutive work blocks.)
+            # (End can only happen with at least 4 consecutive work blocks.)
             prob += 4 * end_active[(k, i)] <= pulp.lpSum(
                 [w[(d, k, i - j)] for j in range(0, 4)]
             )
@@ -218,7 +218,9 @@ for d in range(DAYS):
             #     + b[(d, k, i)] * 2
             #     + l[(d, k, i)] * 3
             # )
-            prob += n[(d, k, i)] + w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] == 1
+            #prob += n[(d, k, i)] + w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] == 1
+            prob += w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] <= 1
+
 
     # 8. Debe haber por lo menos 1 empleado en el estado Trabaja en cada franja
     #    horaria.
@@ -249,10 +251,10 @@ if pulp.LpStatus[prob.status] == "Optimal":
 
     # Display results functions
     #print_3d_schedule(x)
-    print_3d_schedule_channels(w, b, l, n)
+    print_3d_schedule_channels(w, b, l)
     print("\n")
     print("Objective =", pulp.value(prob.objective))
 else:
-    print_3d_schedule_channels(w, b, l, n)
+    print_3d_schedule_channels(w, b, l)
     #print_3d_schedule(x)
     print("Could not find an optimal solution.")

@@ -11,7 +11,8 @@ def write_matrix_to_csv(matrix, file_path):
         csvwriter = csv.writer(csvfile)
         csvwriter.writerows(matrix)
 
-def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix, nothing_matrix):
+
+def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix):
     """Print a 3D schedule (including days) in a human-readable format using color."""
 
     # Define ANSI escape sequences for colors
@@ -22,10 +23,9 @@ def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix, nothing_
 
     # Define the symbols for printing the schedule
     symbols = {
-        'work': f"{GREEN}██{END}",
-        'break': f"{BLUE}██{END}",
-        'lunch': f"{YELLOW}██{END}",
-        'nothing': "  "
+        "work": f"{GREEN}██{END}",
+        "break": f"{BLUE}██{END}",
+        "lunch": f"{YELLOW}██{END}",
     }
 
     # Extract unique days, rows (employees), and columns (time blocks) from the dictionary keys
@@ -47,21 +47,24 @@ def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix, nothing_
             row_data = []
             # Iterate through each time block for the current row and day
             for c in cols:
+                work_value = round(work_matrix.get((d, r, c), 0).varValue)
+                break_value = round(break_matrix.get((d, r, c), 0).varValue)
+                lunch_value = round(lunch_matrix.get((d, r, c), 0).varValue)
+                
                 # Check each matrix to see if the activity is scheduled
-                if work_matrix.get((d, r, c), 0).varValue == 1:
-                    row_data.append(symbols['work'])
-                elif break_matrix.get((d, r, c), 0).varValue == 1:
-                    row_data.append(symbols['break'])
-                elif lunch_matrix.get((d, r, c), 0).varValue == 1:
-                    row_data.append(symbols['lunch'])
-                elif nothing_matrix.get((d, r, c), 0).varValue == 1:
-                    row_data.append(symbols['nothing'])
+                if work_value == 1:
+                    row_data.append(symbols["work"])
+                elif break_value == 1:
+                    row_data.append(symbols["break"])
+                elif lunch_value == 1:
+                    row_data.append(symbols["lunch"])
+                elif work_value == 0 and break_value == 0 and lunch_value == 0:
+                    row_data.append("  ")
                 else:
-                    row_data.append("  ")  # Default to 'nothing' if none of the activities is scheduled
+                    row_data.append("??")
             # Join the row data with a space for separation between blocks
             schedule_row = f"{str(r).zfill(2)} " + " ".join(row_data)
             print(schedule_row)
-
 
 
 def print_3d_schedule(matrix_dict):
