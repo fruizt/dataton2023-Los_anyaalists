@@ -14,7 +14,7 @@ def solve_saturday_optimization(demand_workers):
     WORKERS = demand_workers["TC"] + demand_workers["MT"]
 
     # Solver configuration
-    solver = pulp.getSolver("PULP_CBC_CMD", threads=16, timeLimit=30, gapRel=0.01)
+    solver = pulp.getSolver("PULP_CBC_CMD", threads=16, timeLimit=60)
 
     # Define the LP problem
     prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
