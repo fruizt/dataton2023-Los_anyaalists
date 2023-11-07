@@ -2,16 +2,6 @@ import csv
 import numpy as np
 
 
-def write_array_to_csv(array, file_path):
-    np.savetxt(file_path, array, delimiter=",")
-
-
-def write_matrix_to_csv(matrix, file_path):
-    with open(file_path, "w", newline="") as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerows(matrix)
-
-
 def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix):
     """Print a 3D schedule (including days) in a human-readable format using color."""
 
@@ -152,6 +142,136 @@ def print_2d_schedule_channels(work_matrix, break_matrix):
         schedule_row = f"{str(r).zfill(2)} " + " ".join(row_data)
         print(schedule_row)
 
+from datetime import datetime, timedelta
+import csv
+
+def calculate_time(c):
+    # Define the starting time and the starting franja
+    base_time = datetime.strptime("7:30", "%H:%M")
+    base_franja = 30
+
+    # Calculate the new time and franja
+    new_time = base_time + timedelta(minutes=15 * c)
+    new_franja = base_franja + c
+
+    # Format the new time in the desired format
+    time_str = new_time.strftime("%H:%M")
+    return time_str, new_franja
+
+def generate_saturday_schedule_csv(work_matrix, break_matrix, employee_ids, dates, suc_code, filename='schedule.csv'):
+    # Define mappings for activities to CSV states
+    activity_to_state = {
+        "work": "Trabaja",
+        "break": "Pausa Activa",
+        "lunch": "Almuerza",
+        "none": "Nada"
+    }
+
+    rows = sorted(set([key[0] for key in work_matrix.keys()]))
+    cols = sorted(set([key[1] for key in work_matrix.keys()]))
+    # Prepare data for CSV
+    csv_data = []
+    
+    # Iterate through each day, employee, and time block
+    for d, date in enumerate(dates):
+        if d == 5:
+            for r, employee_id in enumerate(employee_ids):
+                for c in cols:
+                    work_value = round(work_matrix.get((r, c), 0).varValue)
+                    break_value = round(break_matrix.get((r, c), 0).varValue)
+                    # lunch_value = round(lunch_matrix.get((d, r, c), 0))
+                    
+                    # Determine the state for the CSV
+                    if work_value == 1:
+                        state = activity_to_state["work"]
+                    elif break_value == 1:
+                        state = activity_to_state["break"]
+                    # elif lunch_value == 1:
+                    #     state = activity_to_state["lunch"]
+                    else:
+                        state = activity_to_state["none"]
+                    
+                    # Calculate time and hora_franja
+                    time, time_franja = calculate_time(c)
+                    
+                    # Create a row for the CSV
+                    csv_row = {
+                        "suc_cod": suc_code,  # Assuming this is a fixed value
+                        "documento": employee_id,
+                        "fecha": date,
+                        "hora": time,
+                        "estado": state,
+                        "hora_franja": time_franja
+                    }
+                    csv_data.append(csv_row)
+
+    # Write the data to a CSV file
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ["suc_cod", "documento", "fecha", "hora", "estado", "hora_franja"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for row in csv_data:
+            writer.writerow(row)
+
+def generate_week_schedule_csv(work_matrix, break_matrix, lunch_matrix, employee_ids, dates, suc_code, filename='schedule.csv'):
+    # Define mappings for activities to CSV states
+    activity_to_state = {
+        "work": "Trabaja",
+        "break": "Pausa Activa",
+        "lunch": "Almuerza",
+        "none": "Nada"
+    }
+
+    days = sorted(set([key[0] for key in work_matrix.keys()]))
+    rows = sorted(set([key[1] for key in work_matrix.keys()]))
+    cols = sorted(set([key[2] for key in work_matrix.keys()]))
+    # Prepare data for CSV
+    csv_data = []
+    
+    # Iterate through each day, employee, and time block
+    for d, date in enumerate(dates):
+        print(">> date:", date)
+        print(">> d:", d)
+        if d <= 4:
+            for r, employee_id in enumerate(employee_ids):
+                for c in cols:
+                    work_value = round(work_matrix.get((d, r, c), 0).varValue)
+                    break_value = round(break_matrix.get((d, r, c), 0).varValue)
+                    lunch_value = round(lunch_matrix.get((d, r, c), 0).varValue)
+                    
+                    # Determine the state for the CSV
+                    if work_value == 1:
+                        state = activity_to_state["work"]
+                    elif break_value == 1:
+                        state = activity_to_state["break"]
+                    elif lunch_value == 1:
+                        state = activity_to_state["lunch"]
+                    else:
+                        state = activity_to_state["none"]
+                    
+                    # Calculate time and hora_franja
+                    time, time_franja = calculate_time(c)
+                    
+                    # Create a row for the CSV
+                    csv_row = {
+                        "suc_cod": suc_code,  
+                        "documento": employee_id,
+                        "fecha": date,
+                        "hora": time,
+                        "estado": state,
+                        "hora_franja": time_franja
+                    }
+                    csv_data.append(csv_row)
+
+    # Write the data to a CSV file
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ["suc_cod", "documento", "fecha", "hora", "estado", "hora_franja"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for row in csv_data:
+            writer.writerow(row)
 
 # def print_2d_schedule(matrix_dict):
 #     """Print a 2D schedule in a human-readable format using color."""
