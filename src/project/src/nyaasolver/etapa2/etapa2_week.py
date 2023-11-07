@@ -6,7 +6,7 @@ import pulp
 def solve_week_optimization(demand_workers, sucursal_id):
     """Solve the optimization problem from monday to friday."""
 
-    MAX_WORK_BLOCKS_TC = 32
+    MAX_WORK_BLOCKS_TC = 28
     MAX_WORK_BLOCKS_MT = 16
     SCHEDULE = 49
     DAYS = 5
@@ -155,7 +155,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 # 5. La jornada laboral de todos los empleados de es 8 horas diarias si es de TC, en otro caso es de 4 horas. Los
                 #    estados de Trabaja y Pausa Activa hacen parte de la jornada laboral. El
                 #    tiempo de almuerzo NO constituye tiempo de jornada laboral.
-                # (Ensure 32 blocks of work or breaks.)
+                # (Ensure 28 blocks of work or breaks.)
                 prob += (
                     pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)])
                     == MAX_WORK_BLOCKS_TC
