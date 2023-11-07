@@ -213,14 +213,6 @@ def solve_week_optimization(demand_workers):
                 >= DEMAND_ARRAY[(d * 49) + i]
             )
 
-    # Test
-
-    # Set the end of the shift.
-    # prob += end_active[37] == 1
-
-    # Set a lunch block.
-    # prob += l[29] == 1
-
     # Solve the problem
 
     prob.solve(solver)
