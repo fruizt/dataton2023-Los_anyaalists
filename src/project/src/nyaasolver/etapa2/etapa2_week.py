@@ -206,11 +206,11 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 # (Ensure no blocks of lunch.)
                 prob += pulp.lpSum([l[(k, i)] for i in range(SCHEDULE)]) == 0
 
-            # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la
-            #    jornada laboral del empleado este solo puede estar en los estados de
-            #    Trabaja, Pausa Activa y Almuerza. Es decir, que el estado Nada solo puede
-            #    estar activo al comienzo del día si el empleado no ha comenzado su jornada
-            #    laboral o al final del día si el empleado ya completó su jornada laboral.
+            # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la jornada 
+            #    laboral del empleado este solo puede estar en los estados de Trabaja, Pausa Activa 
+            #    y Almuerza. Es decir, que el estado Nada solo puede estar activo al comienzo del
+            #    día si el empleado no ha comenzado su jornada laboral o al final del día si el
+            #    empleado ya completó su jornada laboral.
 
             # (Define active periods.)
             for i in range(SCHEDULE):
@@ -230,10 +230,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
             prob += pulp.lpSum(active_end[(k, i)] for i in range(SCHEDULE)) == 1
 
             # 7. El último estado de la jornada laboral de los empleados debe ser Trabaja.
-
-            # (Work should be 1 when active_end is 1.)
-            # for i in range(SCHEDULE):
-            #     prob += w[(d, k, i)] >= active_end[(k, i)]
+            # NOOP: Inferred from previous restrictions.
 
             # 9. Cualquier franja de trabajo debe durar entre 1 y 2 horas.
             # NOOP: Inferred from previous restrictions.
