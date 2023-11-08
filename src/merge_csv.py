@@ -35,7 +35,9 @@ def merge_csv_files(directory_path, output_file):
 
 # Example usage:
 # Provide the directory where your CSV files are located
-directory_path = r'C:\Users\test\Documents\GitHub\dataton2023-Los_anyaalists\result'
+# directory_path = r'C:\Users\test\Documents\GitHub\dataton2023-Los_anyaalists\result'
+directory_path = r'D:\Repos\dataton\dataton2023-Los_anyaalists'
+# D:\Repos\dataton\dataton2023-Los_anyaalists
 # Provide the desired output file name
 output_file = 'result.csv'
 
