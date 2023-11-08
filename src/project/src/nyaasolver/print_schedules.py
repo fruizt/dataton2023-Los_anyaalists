@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime, timedelta
-
+import os
 
 def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix):
     """Print a 3D schedule (including days) in a human-readable format using color."""
@@ -160,6 +160,11 @@ def generate_saturday_schedule_csv(
                         "hora_franja": time_franja,
                     }
                     csv_data.append(csv_row)
+                    
+    cur_dir = os.getcwd()
+    directory_path = os.path.join(cur_dir, 'result')
+    os.makedirs(directory_path, exist_ok=True)
+    filename = os.path.join(directory_path, filename)
 
     # Write the data to a CSV file
     with open(filename, "w", newline="") as csvfile:
@@ -228,6 +233,11 @@ def generate_week_schedule_csv(
                         "hora_franja": time_franja,
                     }
                     csv_data.append(csv_row)
+
+    cur_dir = os.getcwd()
+    directory_path = os.path.join(cur_dir, 'result')
+    os.makedirs(directory_path, exist_ok=True)
+    filename = os.path.join(directory_path, filename)
 
     # Write the data to a CSV file
     with open(filename, "w", newline="") as csvfile:
