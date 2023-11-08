@@ -131,22 +131,22 @@ def solve_week_optimization(demand_workers, sucursal_id):
                         ]
                     )
 
-            # (End can only happen with at least WORK_BLOCKS_BEFORE_END - 1 consecutive work blocks
+            # (End can only happen with at least (WORK_BLOCKS_BEFORE_END - 1) consecutive work blocks
             #  preceding and 1 concurrent work block.)
             for i in range(WORK_BLOCKS_BEFORE_END, SCHEDULE):
                 prob += WORK_BLOCKS_BEFORE_END * active_end[(k, i)] <= pulp.lpSum(
                     [w[(d, k, i - j)] for j in range(WORK_BLOCKS_BEFORE_END)]
                 )
 
-            # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a una pausa
-            #    activa. Esto quiere decir que, si un empleado ha trabajado
-            #    MAX_WORK_BLOCKS_BEFORE_BREAK franjas horarias, en la
+            # 2. Los empleados deben trabajar máximo (MAX_WORK_BLOCKS_BEFORE_BREAK / 15) horas de
+            #    forma continua sin salir a una pausa activa. Esto quiere decir que, si un empleado 
+            #    ha trabajado MAX_WORK_BLOCKS_BEFORE_BREAK franjas horarias, en la
             #    (MAX_WORK_BLOCKS_BEFORE_BREAK + 1) franja horaria SÍ debe salir a Pausa Activa o
             #    Almuerzo.
 
+            # (No more than MAX_WORK_BLOCKS_BEFORE_BREAK work blocks in a
+            #  (MAX_WORK_BLOCKS_BEFORE_BREAK + 1)-long segment.)
             for i in range(SCHEDULE - MAX_WORK_BLOCKS_BEFORE_BREAK):
-                # (No more than MAX_WORK_BLOCKS_BEFORE_BREAK work blocks in a
-                #  (MAX_WORK_BLOCKS_BEFORE_BREAK + 1)-long segment.)
                 prob += (
                     pulp.lpSum(
                         [
@@ -185,19 +185,19 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 prob += pulp.lpSum([l[(k, i)] for i in range(START_LUNCH)]) == 0
                 prob += pulp.lpSum([l[(k, i)] for i in range(END_LUNCH, SCHEDULE)]) == 0
 
-                # 5. La jornada laboral de todos los empleados de es MAX_WORK_BLOCKS_TC / 15 horas
-                #    diarias si es de TC, en otro caso es de MAX_WORK_BLOCKS_MT / 15 horas. Los
+                # 5. La jornada laboral de todos los empleados de es (MAX_WORK_BLOCKS_TC / 15) horas
+                #    diarias si es de TC, en otro caso es de (MAX_WORK_BLOCKS_MT / 15) horas. Los
                 #    estados de Trabaja y Pausa Activa hacen parte de la jornada laboral. El tiempo
                 #    de almuerzo NO constituye tiempo de jornada laboral.
 
-                # (Ensure SCHEDULE blocks of work or breaks for full time workers.)
+                # (Ensure MAX_WORK_BLOCKS_TC blocks of work or breaks for full time workers.)
                 prob += (
                     pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)])
                     == MAX_WORK_BLOCKS_TC
                 )
 
             else:
-                # (Ensure SCHEDULE blocks of work or breaks for part time workers.)
+                # (Ensure MAX_WORK_BLOCKS_MT blocks of work or breaks for part time workers.)
                 prob += (
                     pulp.lpSum([w[(d, k, i)] + b[(d, k, i)] for i in range(SCHEDULE)])
                     == MAX_WORK_BLOCKS_MT
@@ -206,8 +206,8 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 # (Ensure no blocks of lunch.)
                 prob += pulp.lpSum([l[(k, i)] for i in range(SCHEDULE)]) == 0
 
-            # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la jornada 
-            #    laboral del empleado este solo puede estar en los estados de Trabaja, Pausa Activa 
+            # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la jornada
+            #    laboral del empleado este solo puede estar en los estados de Trabaja, Pausa Activa
             #    y Almuerza. Es decir, que el estado Nada solo puede estar activo al comienzo del
             #    día si el empleado no ha comenzado su jornada laboral o al final del día si el
             #    empleado ya completó su jornada laboral.
