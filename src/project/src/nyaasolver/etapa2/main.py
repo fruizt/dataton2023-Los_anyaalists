@@ -13,7 +13,7 @@ elif platform.system() == "Linux":
     path_to_cplex = files("nyaasolver.solvers").joinpath("cplex")
 
 solver = pulp.getSolver(
-    "CPLEX_CMD", path=path_to_cplex, threads=4, timeLimit=1000, gapRel=0.3
+    "CPLEX_CMD", path=str(path_to_cplex), threads=4, timeLimit=1000, gapRel=0.3
 )
 
 
