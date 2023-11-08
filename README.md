@@ -3,6 +3,8 @@
     <h1 align="center">dataton2023-Los_anyaalists</h1>
 </div>
 
+https://github.com/fruizt/dataton2023-Los_anyaalists/assets/62965201/c7de44cf-b295-4cc3-81b6-e3cc838f1108
+
 - Juan Pablo Gutiérrez Restrepo
 - Fabian Andres Ruiz Tortello
 - Heldert Villegas Jaramillo
