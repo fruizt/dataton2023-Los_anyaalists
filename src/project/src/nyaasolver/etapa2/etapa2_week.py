@@ -6,7 +6,7 @@ from nyaasolver.etapa2.helper import is_full_time_worker
 import pulp
 
 
-def solve_week_optimization(demand_workers, sucursal_id):
+def solve_week_optimization(demand_workers, sucursal_id, solver):
     """Solve the optimization problem from monday to friday."""
 
     MAX_WORK_BLOCKS_TC = 28
@@ -27,13 +27,6 @@ def solve_week_optimization(demand_workers, sucursal_id):
     DEMAND_ARRAY = demand_workers["demands"]
     EMPLOYEES = len(demand_workers["TC"]) + len(demand_workers["MT"])
     WORKERS = demand_workers["TC"] + demand_workers["MT"]
-
-    # Solver configuration
-    # solver = pulp.getSolver("PULP_CBC_CMD", threads=16, timeLimit=400)
-    path_to_cplex = (
-        r"C:\Program Files\IBM\ILOG\CPLEX_Studio2211\cplex\bin\x64_win64\cplex.exe"
-    )
-    solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, timeLimit=30)
 
     # Define the LP problem
     prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
