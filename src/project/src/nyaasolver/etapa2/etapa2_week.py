@@ -18,6 +18,8 @@ def solve_week_optimization(demand_workers, sucursal_id):
     WORK_BLOCKS_BEFORE_LUNCH = 4
     WORK_BLOCKS_BEFORE_END = 4
 
+    MAX_WORK_BLOCKS_BEFORE_BREAK = 8
+
     START_LUNCH = 16
     END_LUNCH = 30
     LUNCH_BLOCKS = 6
@@ -111,15 +113,16 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 pulp.lpSum(b[(d, k, i)] for i in range(WORK_BLOCKS_BEFORE_BREAK)) == 0
             )
 
+            # (Breaks can only occur after at least WORK_BLOCKS_BEFORE_BREAK consecutive work
+            #  blocks.)
             for i in range(WORK_BLOCKS_BEFORE_BREAK, SCHEDULE):
-                # (Breaks can only occur after at least WORK_BLOCKS_BEFORE_BREAK consecutive work blocks.)
                 prob += WORK_BLOCKS_BEFORE_BREAK * b[(d, k, i)] <= pulp.lpSum(
                     [w[(d, k, i - j)] for j in range(1, WORK_BLOCKS_BEFORE_BREAK + 1)]
                 )
 
+            # (Lunch can only begin after at least WORK_BLOCKS_BEFORE_LUNCH consecutive work blocks.
+            #  (Only for full time workers.))
             for i in range(WORK_BLOCKS_BEFORE_LUNCH, SCHEDULE):
-                # (Lunch can only begin after at least WORK_BLOCKS_BEFORE_LUNCH consecutive work blocks. (Only for full
-                #  time workers.))
                 if is_full_time_worker(worker, demand_workers):
                     prob += WORK_BLOCKS_BEFORE_LUNCH * l[(k, i)] <= pulp.lpSum(
                         [
@@ -128,20 +131,31 @@ def solve_week_optimization(demand_workers, sucursal_id):
                         ]
                     )
 
+            # (End can only happen with at least WORK_BLOCKS_BEFORE_END - 1 consecutive work blocks
+            #  preceding and 1 concurrent work block.)
             for i in range(WORK_BLOCKS_BEFORE_END, SCHEDULE):
-                # (End can only happen with at least WORK_BLOCKS_BEFORE_END - 1 consecutive work blocks preceding and 1
-                #  concurrent work block.)
                 prob += WORK_BLOCKS_BEFORE_END * active_end[(k, i)] <= pulp.lpSum(
                     [w[(d, k, i - j)] for j in range(WORK_BLOCKS_BEFORE_END)]
                 )
 
-            # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a
-            #    una pausa activa. Esto quiere decir que, si un empleado ha trabajado 8
-            #    franjas horarias, en la 9 franja horaria SÍ debe salir a Pausa Activa o
+            # 2. Los empleados deben trabajar máximo 2 horas de forma continua sin salir a una pausa
+            #    activa. Esto quiere decir que, si un empleado ha trabajado
+            #    MAX_WORK_BLOCKS_BEFORE_BREAK franjas horarias, en la
+            #    (MAX_WORK_BLOCKS_BEFORE_BREAK + 1) franja horaria SÍ debe salir a Pausa Activa o
+            #    Almuerzo.
 
-            for i in range(SCHEDULE - 8):
-                # (No more than 8 work blocks in a 9-long segment.)
-                prob += pulp.lpSum([w[(d, k, i + j)] for j in range(9)]) <= 8
+            for i in range(SCHEDULE - MAX_WORK_BLOCKS_BEFORE_BREAK):
+                # (No more than MAX_WORK_BLOCKS_BEFORE_BREAK work blocks in a
+                #  (MAX_WORK_BLOCKS_BEFORE_BREAK + 1)-long segment.)
+                prob += (
+                    pulp.lpSum(
+                        [
+                            w[(d, k, i + j)]
+                            for j in range(MAX_WORK_BLOCKS_BEFORE_BREAK + 1)
+                        ]
+                    )
+                    <= MAX_WORK_BLOCKS_BEFORE_BREAK
+                )
 
             if is_full_time_worker(worker, demand_workers):
                 # 3. El tiempo de almuerzo debe tomarse de forma CONTINUA y es de 1 hora y
@@ -151,11 +165,13 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 prob += pulp.lpSum([l[(k, i)] for i in range(SCHEDULE)]) == LUNCH_BLOCKS
 
                 # (Ensure the lunch block is continuous.)
-                # (Lunch can only happen if the next lunch block is active OR the current end_lunch
-                #  block is active.)
+
+                #     (Lunch can only happen if the next lunch block is active OR the current
+                #      lunch_end block is active.)
                 for i in range(SCHEDULE - 1):
                     prob += l[(k, i)] <= l[(k, i + 1)] + lunch_end[(k, i)]
-                # (There can only be one end_lunch block.)
+
+                #     (There can only be one end_lunch block.)
                 prob += pulp.lpSum(lunch_end[(k, i)] for i in range(SCHEDULE)) == 1
 
                 # 4. La hora mínima de salida para tomar el almuerzo son las 11:30 am y la hora
@@ -169,10 +185,10 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 prob += pulp.lpSum([l[(k, i)] for i in range(START_LUNCH)]) == 0
                 prob += pulp.lpSum([l[(k, i)] for i in range(END_LUNCH, SCHEDULE)]) == 0
 
-                # 5. La jornada laboral de todos los empleados de es MAX_WORK_BLOCKS_TC / 15 horas diarias si es de TC, en
-                #    otro caso es de MAX_WORK_BLOCKS_MT / 15 horas. Los estados de Trabaja y Pausa Activa hacen parte de
-                #    la jornada laboral. El tiempo de almuerzo NO constituye tiempo de jornada
-                #    laboral.
+                # 5. La jornada laboral de todos los empleados de es MAX_WORK_BLOCKS_TC / 15 horas
+                #    diarias si es de TC, en otro caso es de MAX_WORK_BLOCKS_MT / 15 horas. Los
+                #    estados de Trabaja y Pausa Activa hacen parte de la jornada laboral. El tiempo
+                #    de almuerzo NO constituye tiempo de jornada laboral.
 
                 # (Ensure SCHEDULE blocks of work or breaks for full time workers.)
                 prob += (
@@ -198,18 +214,19 @@ def solve_week_optimization(demand_workers, sucursal_id):
 
             # (Define active periods.)
             for i in range(SCHEDULE):
-                # prob += a[(k, i)] >= w[(d, k, i)]
-                # prob += a[(k, i)] >= b[(d, k, i)]
-                # prob += a[(k, i)] >= l[(k, i)]
                 prob += a[(k, i)] == w[(d, k, i)] + b[(d, k, i)] + l[(k, i)]
 
             # (Ensure the active block is continuous.)
+
+            #     (Active can only happen if the next active block is active OR the current
+            #      active_end block is active.)
             for i in range(SCHEDULE - 1):
                 prob += a[(k, i)] <= a[(k, i + 1)] + active_end[(k, i)]
 
+            #     (The last block can be active if the current active_end block is active.)
             prob += active_end[(k, SCHEDULE - 1)] == a[(k, SCHEDULE - 1)]
 
-            # (Ensure there is only one end block)
+            #     (Ensure there is only one end block)
             prob += pulp.lpSum(active_end[(k, i)] for i in range(SCHEDULE)) == 1
 
             # 7. El último estado de la jornada laboral de los empleados debe ser Trabaja.
@@ -241,10 +258,9 @@ def solve_week_optimization(demand_workers, sucursal_id):
             )
 
     # Solve the problem
-
     prob.solve(solver)
 
-    # Check the solver status
+    # Check the solver status and print the results.
     if pulp.LpStatus[prob.status] == "Optimal":
         print("Found an optimal solution!")
 
