@@ -1,4 +1,7 @@
-from nyaasolver.print_schedules import print_3d_schedule_channels, generate_week_schedule_csv
+from nyaasolver.print_schedules import (
+    print_3d_schedule_channels,
+    generate_week_schedule_csv,
+)
 from nyaasolver.etapa2.helper import is_full_time_worker
 import pulp
 
@@ -20,7 +23,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
     path_to_cplex = (
         r"C:\Program Files\IBM\ILOG\CPLEX_Studio2211\cplex\bin\x64_win64\cplex.exe"
     )
-    solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=16, timeLimit=1000, gapRel=0.01)
+    solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, timeLimit=7200)
 
     # Define the LP problem
     prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
@@ -228,8 +231,19 @@ def solve_week_optimization(demand_workers, sucursal_id):
         print_3d_schedule_channels(w, b, l)
         print("\n")
         print("Objective =", pulp.value(prob.objective))
-        generate_week_schedule_csv(w, b, l, WORKERS, demand_workers["days"].keys(), sucursal_id, filename="week_schedule_" + str(sucursal_id) + ".csv")
-        return {"result": (w, b, l), "objective_function_result": pulp.value(prob.objective)}
+        generate_week_schedule_csv(
+            w,
+            b,
+            l,
+            WORKERS,
+            demand_workers["days"].keys(),
+            sucursal_id,
+            filename="week_schedule_" + str(sucursal_id) + ".csv",
+        )
+        return {
+            "result": (w, b, l),
+            "objective_function_result": pulp.value(prob.objective),
+        }
     else:
         print_3d_schedule_channels(w, b, l)
         print("Could not find an optimal solution.")
