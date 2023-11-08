@@ -1,4 +1,5 @@
 <div align="center">
+    <img src="https://images-ng.pixai.art/images/orig/68838d12-1d10-4171-9fb1-c97f8fc4ff68" width="150">
     <h1 align="center">dataton2023-Los_anyaalists</h1>
 </div>
 
