@@ -39,7 +39,7 @@ def print_3d_schedule_channels(work_matrix, break_matrix, lunch_matrix):
             for c in cols:
                 work_value = round(work_matrix.get((d, r, c), 0).varValue)
                 break_value = round(break_matrix.get((d, r, c), 0).varValue)
-                lunch_value = round(lunch_matrix.get((d, r, c), 0).varValue)
+                lunch_value = round(lunch_matrix.get((r, c), 0).varValue)
 
                 # Check each matrix to see if the activity is scheduled
                 if work_value == 1:
@@ -203,7 +203,7 @@ def generate_week_schedule_csv(
                 for r, employee_id in enumerate(employee_ids):
                     work_value = round(work_matrix.get((d, r, c), 0).varValue)
                     break_value = round(break_matrix.get((d, r, c), 0).varValue)
-                    lunch_value = round(lunch_matrix.get((d, r, c), 0).varValue)
+                    lunch_value = round(lunch_matrix.get((r, c), 0).varValue)
 
                     # Determine the state for the CSV
                     if work_value == 1:

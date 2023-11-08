@@ -23,7 +23,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
     path_to_cplex = (
         r"C:\Program Files\IBM\ILOG\CPLEX_Studio2211\cplex\bin\x64_win64\cplex.exe"
     )
-    solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, timeLimit=7200)
+    solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=12, timeLimit=30)
 
     # Define the LP problem
     prob = pulp.LpProblem("Minimize_PD", pulp.LpMinimize)
@@ -59,12 +59,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
     )  # 1 for active pause, 0 otherwise
     l = pulp.LpVariable.dicts(
         "Lunch",
-        [
-            (x, y, z)
-            for x in range(DAYS)
-            for y in range(EMPLOYEES)
-            for z in range(SCHEDULE)
-        ],
+        [(y, z) for y in range(EMPLOYEES) for z in range(SCHEDULE)],
         cat=pulp.LpBinary,
     )  # 1 for lunch, 0 otherwise
 
@@ -114,8 +109,8 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 )
                 # (Lunch can only begin after at least 4 consecutive work blocks.)
                 if is_full_time_worker(worker, demand_workers):
-                    prob += 4 * l[(d, k, i)] <= pulp.lpSum(
-                        [w[(d, k, i - j)] + l[(d, k, i - j)] for j in range(1, 5)]
+                    prob += 4 * l[(k, i)] <= pulp.lpSum(
+                        [w[(d, k, i - j)] + l[(k, i - j)] for j in range(1, 5)]
                     )
 
                 # (End can only happen with at least 4 consecutive work blocks.)
@@ -137,11 +132,11 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 #    media. Se debe tomar almuerzo una única vez en el día.
 
                 # (Ensure 6 blocks of lunch.)
-                prob += pulp.lpSum([l[(d, k, i)] for i in range(SCHEDULE)]) == 6
+                prob += pulp.lpSum([l[(k, i)] for i in range(SCHEDULE)]) == 6
 
                 # (Ensure the lunch block is continuous.)
                 for i in range(SCHEDULE - 1):
-                    prob += l[(d, k, i)] <= l[(d, k, i + 1)] + end_almuerzo[(k, i)]
+                    prob += l[(k, i)] <= l[(k, i + 1)] + end_almuerzo[(k, i)]
                 prob += pulp.lpSum(end_almuerzo[(k, i)] for i in range(SCHEDULE)) == 1
 
                 # 4. La hora mínima de salida para tomar el almuerzo son las 11:30 am y la hora
@@ -152,8 +147,8 @@ def solve_week_optimization(demand_workers, sucursal_id):
                 #      iii. Es VÁLIDO que una persona tome almuerzo de la 1:30 pm a las 3:00
 
                 # (Ensure no lunch outside of valid hours.)
-                prob += pulp.lpSum([l[(d, k, i)] for i in range(16)]) == 0
-                prob += pulp.lpSum([l[(d, k, i)] for i in range(30, SCHEDULE)]) == 0
+                prob += pulp.lpSum([l[(k, i)] for i in range(16)]) == 0
+                prob += pulp.lpSum([l[(k, i)] for i in range(30, SCHEDULE)]) == 0
 
                 # 5. La jornada laboral de todos los empleados de es 8 horas diarias si es de TC, en otro caso es de 4 horas. Los
                 #    estados de Trabaja y Pausa Activa hacen parte de la jornada laboral. El
@@ -169,7 +164,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
                     == MAX_WORK_BLOCKS_MT
                 )
 
-                prob += pulp.lpSum([l[(d, k, i)] for i in range(SCHEDULE)]) == 0
+                prob += pulp.lpSum([l[(k, i)] for i in range(SCHEDULE)]) == 0
 
             # 6. El horario de los empleados debe ser CONTINUO, desde que comienza la
             #    jornada laboral del empleado este solo puede estar en los estados de
@@ -181,8 +176,8 @@ def solve_week_optimization(demand_workers, sucursal_id):
             for i in range(SCHEDULE):
                 prob += a[(k, i)] >= w[(d, k, i)]
                 prob += a[(k, i)] >= b[(d, k, i)]
-                prob += a[(k, i)] >= l[(d, k, i)]
-                prob += a[(k, i)] <= w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)]
+                prob += a[(k, i)] >= l[(k, i)]
+                prob += a[(k, i)] <= w[(d, k, i)] + b[(d, k, i)] + l[(k, i)]
 
             # (Ensure the active block is continuous.)
             for i in range(SCHEDULE - 1):
@@ -206,7 +201,7 @@ def solve_week_optimization(demand_workers, sucursal_id):
 
             # Channel Decomposition
             for i in range(SCHEDULE):
-                prob += w[(d, k, i)] + b[(d, k, i)] + l[(d, k, i)] <= 1
+                prob += w[(d, k, i)] + b[(d, k, i)] + l[(k, i)] <= 1
 
         # 8. Debe haber por lo menos 1 empleado en el estado Trabaja en cada franja
         #    horaria.
