@@ -4,7 +4,10 @@ setup(
     name="nyaasolver",
     packages=find_namespace_packages(where="src"),
     package_dir={"": "src"},
-    package_data={"nyaasolver.files": ["*.*"]},
+    package_data={
+        "nyaasolver.files": ["*.*"],
+        "nyaasolver.solvers": ["*.*"],
+    },
     install_requires=[
         "numpy",
         "openpyxl",

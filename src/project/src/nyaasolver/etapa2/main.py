@@ -3,11 +3,17 @@ import nyaasolver.etapa2.etapa2_sat as etapa2_sat
 import nyaasolver.import_file as import_file
 import nyaasolver.merge_csv as merge_csv
 import pulp
-import os 
+from importlib.resources import files
+import platform
 
 # Solver configuration
-path_to_cplex = (r".\solvers\cplex.exe")
-solver = pulp.getSolver("CPLEX_CMD", threads=16, timeLimit=30)
+if platform.system() == 'Windows':
+    path_to_cplex = files('nyaasolver.solvers').joinpath('cplex.exe')
+elif platform.system() == 'Linux':
+    path_to_cplex = files('nyaasolver.solvers').joinpath('cplex')
+
+solver = pulp.getSolver("CPLEX_CMD", path=path_to_cplex, threads=16, timeLimit=30)
+
 
 def solve_optimization():
     demand_workers = import_file.import_file_etapa2()
